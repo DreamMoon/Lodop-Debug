@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>Lodop打印调试</title>
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+
+    <!-- HTML5 shim 和 Respond.js 是为了让 IE8 支持 HTML5 元素和媒体查询（media queries）功能 -->
+    <!-- 警告：通过 file:// 协议（就是直接将 html 页面拖拽到浏览器中）访问页面时 Respond.js 不起作用 -->
+    <!--[if lt IE 9]>
+      <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+    <![endif]-->
+    <style>
+    	.container-inner {
+    		padding: 20px;
+    	}
+    </style>
+
+    <object id="LODOP_OB" classid="clsid:2105C259-1E0C-4534-8141-A753534CB4CA" width=0 height=0> 
+        <embed id="LODOP_EM" type="application/x-print-lodop" width=0 height=0 pluginspage="install_lodop32.exe"></embed>
+    </object>
+  </head>
+  <body>
+    <div class="container">
+    	<div class="container-inner" id="div-container-inner">
+    		<div class="card">
+              <div class="card-header">
+                <b>Lodop打印调试</b>
+              </div>
+              <div class="card-body">
+                <form>
+                      <div class="form-group">
+                        <label for="exampleFormControlTextarea1">输入打印指令</label>
+                        <textarea class="form-control" rows="15" id="textarea-cmd"></textarea>
+                      </div>
+                </form>
+              </div>
+              <div class="card-footer text-muted">
+                <a href="javascript:void(0)" class="btn btn-primary" id="link-print">Print</a>
+                <a href="javascript:void(0)" class="btn btn-secondary" id="link-preview">Preview</a>
+                <a href="javascript:void(0)" class="btn btn-success" id="link-copy">Copy</a>
+                <a href="javascript:void(0)" class="btn btn-danger" id="link-clear">Clear</a>
+              </div>
+            </div>
+    	</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+
+    <script>
+        var LODOP;
+    	var app = {
+    		selector: {
+    		},
+    		ele: {
+                $divContainerInner: $('#div-container-inner'),
+    			$textareaCmd: $('#textarea-cmd'),
+                $linkPrint: $('#link-print'),
+                $linkPreview: $('#link-preview'),
+                $linkCopy: $('#link-copy'),
+                $linkClear: $('#link-clear')
+    		},
+            data: {
+            },
+            getLodop: function (oOBJECT, oEMBED) {
+                /**************************
+                 本函数根据浏览器类型决定采用哪个对象作为控件实例：
+                 IE系列、IE内核系列的浏览器采用oOBJECT，
+                 其它浏览器(Firefox系列、Chrome系列、Opera系列、Safari系列等)采用oEMBED,
+                 对于64位浏览器指向64位的安装程序install_lodop64.exe。
+                 **************************/
+                var lodopDownLoadURL = "http://demo.c-lodop.com:8000/Lodop6.226_Clodop4.127.zip";
+                var strHtmInstall = "<div class='alert alert-primary' role='alert'>打印控件未安装!点击这里<a href=" + lodopDownLoadURL + "install_lodop32.zip target='_self' >执行下载安装</a>,安装后请刷新页面或重新进入。</div>";
+                var strHtmUpdate = "<div class='alert alert-primary' role='alert'>打印控件需要升级!点击这里<a href=" + lodopDownLoadURL + "'install_lodop32.zip' target='_self'>执行下载升级</a>,升级后请重新进入。</div>";
+                var strHtm64_Install = "<div class='alert alert-primary' role='alert'>打印控件未安装!点击这里<a href=" + lodopDownLoadURL + "install_lodop64.zip target='_self'>执行下载安装</a>,安装后请刷新页面或重新进入。</div>";
+                var strHtm64_Update = "<div class='alert alert-primary' role='alert'>打印控件需要升级!点击这里<a href=" + lodopDownLoadURL + "install_lodop64.zip target='_self'>执行下载升级</a>,升级后请重新进入。</div>";
+                var strHtmFireFox = "<div class='alert alert-primary' role='alert'>注意：<br>1：如曾安装过Lodop旧版附件npActiveXPLugin,请在【工具】->【附加组件】->【扩展】中先卸它。</div>";
+                var lodopObj = oEMBED;
+                var strHtm = "";
+                try {
+                    var $divContainerInner = this.ele.$divContainerInner;
+                    if (navigator.appVersion.indexOf("MSIE") >= 0) lodopObj = oOBJECT;
+                    if ((lodopObj == null) || (typeof (lodopObj.VERSION) == "undefined")) {
+                        if (navigator.userAgent.indexOf('Firefox') >= 0) {
+                            strHtm = strHtmFireFox + strHtm;
+                        }
+                        if (navigator.userAgent.indexOf('Win64') >= 0) {
+                            if (navigator.appVersion.indexOf("MSIE") >= 0) {
+                                $divContainerInner.prepend(strHtm64_Install);
+                            } else {
+                                strHtm = strHtm64_Install + strHtm;
+                                $divContainerInner.prepend(strHtm);
+                            }
+                        } else {
+                            if (navigator.appVersion.indexOf("MSIE") >= 0) {
+                                $divContainerInner.prepend(strHtmInstall);
+                            } else {
+                                strHtm = strHtmInstall + strHtm;
+                                $divContainerInner.prepend(strHtm);
+                            }
+                        }
+                        return lodopObj;
+                    } else if (lodopObj.VERSION < "6.1.5.7") {
+                        if (navigator.userAgent.indexOf('Win64') >= 0) {
+                            if (navigator.appVersion.indexOf("MSIE") >= 0) {
+                                $divContainerInner.prepend(strHtm64_Update);
+                            } else {
+                                strHtm = strHtm64_Update + strHtm;
+                                $divContainerInner.prepend(strHtm);
+                            }
+                        } else {
+                            if (navigator.appVersion.indexOf("MSIE") >= 0) {
+                                $divContainerInner.prepend(strHtmUpdate);
+                            } else {
+                                strHtm = strHtmUpdate + strHtm;
+                                $divContainerInner.prepend(strHtm);
+                            }
+                        }
+                        return lodopObj;
+                    }
+                    //=====如下空白位置适合调用统一功能:=====      
+                    lodopObj.SET_LICENSES("", "054C9D2039BECA69C234909E737523A4", "C94CEE276DB2187AE6B65D56B3FC2848", "");
+                    //=======================================
+                    return lodopObj;
+                } catch (err) {
+                    if (navigator.userAgent.indexOf('Win64') >= 0) {
+                        strHtm = "Error:" + strHtm64_Install + strHtm;
+                    } else {
+                        strHtm = "Error:" + strHtmInstall + strHtm;
+                    }
+                    return lodopObj;
+                }
+            },
+            initLodop: function() {
+                var self = this;
+                if(LODOP == null) {
+                    LODOP = self.getLodop(document.getElementById('LODOP_OB'), document.getElementById('LODOP_EM'));
+                }
+                console.log('打印初始化-LODOP对象：' + LODOP);
+            },
+    		print: function(cmd, callback) {
+                try {
+                    eval(cmd);
+                    console.log('成功通知打印机打印');
+                    if(undefined != callback && null != callback) {
+                        callback();
+                    }
+                } catch(err) {
+                    console.log(err);
+                    alert('打印失败：' + err);
+                    return;
+                }
+                /*try {
+                    if (LODOP.PRINT()) {
+                        console.log('成功通知打印机打印');
+                        if(undefined != callback && null != callback) {
+                            callback();
+                        }
+                    }
+                } catch(err) {
+                    alert('打印失败：' + err);
+                }*/
+    		},
+            preview: function(cmd, callback) {
+                try {
+                    eval(cmd);
+                    console.log('成功通知浏览器预览');
+                    if(undefined != callback && null != callback) {
+                        callback();
+                    }
+                } catch(err) {
+                    console.log(err);
+                    alert('预览失败：' + err);
+                    return;
+                }
+            },
+            formatPrintCmd: function(cmd, isPreview) {
+                console.log('原始打印指令：' + cmd);
+                cmd = cmd.replace(/\\\"/g, '\'');
+                cmd = cmd.replace(/\\r\\n/g, '');
+                cmd = cmd.replace(/\\n/g, '');
+                if (isPreview) {
+                    cmd = cmd.replace(/PRINT\(\);/g, 'PREVIEW();');
+                    console.log('test');
+                }
+                console.log('格式化后的打印指令：' + cmd);
+                return cmd;
+            },
+    		bindPrintOperate: function() {
+    			var self = this;
+                var $textareaCmd = self.ele.$textareaCmd;
+                this.ele.$linkPrint.on('click', function() {
+                    var cmd = $textareaCmd.val();
+                    if (!cmd) {
+                        alert('请先输入打印指令');
+                        return;
+                    }
+                    cmd = self.formatPrintCmd(cmd, false);
+                    self.print(cmd);
+                });
+    		},
+            bindPreviewOperate: function() {
+                var self = this;
+                var $textareaCmd = self.ele.$textareaCmd;
+                this.ele.$linkPreview.on('click', function() {
+                    var cmd = $textareaCmd.val();
+                    if (!cmd) {
+                        alert('请先输入打印指令');
+                        return;
+                    }
+                    cmd = self.formatPrintCmd(cmd, true);
+                    self.preview(cmd);
+                });
+            },
+            bindCopyOperate: function() {
+                var self = this;
+                var $textareaCmd = self.ele.$textareaCmd;
+                this.ele.$linkCopy.on('click', function() {
+                    var clipboard = new ClipboardJS(this, {
+                        text: function() {
+                            return $textareaCmd.val();
+                        }
+                    });
+                    clipboard.on("success", function(e) {
+                        console.log("复制成功！");
+                        clipboard.destroy();
+                    });
+                    clipboard.on("error", function(e) {
+                        alert('复制失败，请手动复制！');
+                    });
+                    // 解决clipboard二次点击生效问题
+                    this.click();
+                    clipboard.destroy();
+                });
+            },
+            bindCopyClear: function() {
+                var self = this;
+                var $textareaCmd = self.ele.$textareaCmd;
+                this.ele.$linkClear.on('click', function() {
+                    if (confirm('你确定要清楚打印指令？')) {
+                        $textareaCmd.val('');
+                        $textareaCmd.focus();
+                    }
+                });
+            },
+    		listen: function() {
+    			this.bindPrintOperate();
+                this.bindPreviewOperate();
+                this.bindCopyOperate();
+                this.bindCopyClear();
+    		},
+    		init: function() {
+                this.initLodop();
+    			this.listen();
+    		}
+    	};
+    	app.init();
+    </script>
+  </body>
+</html>
