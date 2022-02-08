@@ -2,7 +2,7 @@
 Lodop标签打印调试页面
 1. 安装打印控件：CLodop_Setup_for_Win32NT.exe；
 2. 使用360浏览器，极速模式；
-3. 打开[Lodop打印Debug页面](https://dreammoon.github.io/Lodop-Debug/LodopPrintDebug.html)；
+3. 打开[Lodop打印Debug页面](https://zerothdream.github.io/Lodop-Debug/LodopPrintDebug.html)；
 4. 输入需调试的打印指令，如：
 ```
 LODOP.PRINT_INITA(0,-1,\"60.01mm\",\"40mm\",\"\");
